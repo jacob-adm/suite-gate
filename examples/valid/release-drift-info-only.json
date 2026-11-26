@@ -1,0 +1,29 @@
+{
+  "format": "audit-result/1",
+  "tool": {
+    "name": "release-drift",
+    "version": "0.6.0"
+  },
+  "target": {
+    "kind": "artifact",
+    "name": "demo-1.0.whl -> demo-1.1.whl"
+  },
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "release-drift.file",
+      "severity": "info",
+      "message": "demo/core.py changed",
+      "evidence": {
+        "path": "demo/core.py"
+      },
+      "record": {
+        "category": "file",
+        "status": "changed",
+        "path": "demo/core.py",
+        "detail": "-"
+      }
+    }
+  ],
+  "errors": []
+}
