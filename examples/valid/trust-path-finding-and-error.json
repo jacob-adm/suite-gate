@@ -1,0 +1,38 @@
+{
+  "format": "audit-result/1",
+  "tool": {
+    "name": "trust-path",
+    "version": "0.7.0"
+  },
+  "target": {
+    "kind": "repository",
+    "name": "example/app",
+    "ref": "pr-42"
+  },
+  "exit": 2,
+  "findings": [
+    {
+      "rule": "trust-path.run",
+      "severity": "high",
+      "message": "pull_request_target reaches a run step through a head checkout",
+      "evidence": {
+        "path": ".github/workflows/review.yml",
+        "ref": "pr-42"
+      },
+      "record": {
+        "source": "pull_request_target",
+        "workflow": "review.yml",
+        "job": "build",
+        "step": "3",
+        "sink": "run",
+        "detail": "head checkout"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "message": "refused: anchor alias in YAML",
+      "path": ".github/workflows/odd.yml"
+    }
+  ]
+}

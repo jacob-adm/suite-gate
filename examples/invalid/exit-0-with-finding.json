@@ -1,0 +1,33 @@
+{
+  "format": "audit-result/1",
+  "tool": {
+    "name": "git-surface",
+    "version": "0.3.1"
+  },
+  "target": {
+    "kind": "repository",
+    "name": "example/app",
+    "ref": "agent/ci",
+    "base": "main"
+  },
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "git-surface.ci",
+      "severity": "high",
+      "message": "agent/ci changes a CI workflow",
+      "evidence": {
+        "path": ".github/workflows/test.yml",
+        "ref": "agent/ci",
+        "commit": "3f2a3f2a3f2a3f2a3f2a3f2a3f2a3f2a3f2a3f2a"
+      },
+      "record": {
+        "ref": "agent/ci",
+        "class": "ci",
+        "detail": "M",
+        "path": ".github/workflows/test.yml"
+      }
+    }
+  ],
+  "errors": []
+}

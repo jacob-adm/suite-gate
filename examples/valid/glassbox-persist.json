@@ -1,0 +1,28 @@
+{
+  "format": "audit-result/1",
+  "tool": {
+    "name": "glassbox",
+    "version": "0.5.1"
+  },
+  "target": {
+    "kind": "host",
+    "name": "local"
+  },
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "glassbox.persist.added",
+      "severity": "medium",
+      "message": "autostart ~/Library/LaunchAgents/com.example.agent.plist was added",
+      "evidence": {
+        "path": "~/Library/LaunchAgents/com.example.agent.plist"
+      },
+      "record": {
+        "change": "added",
+        "category": "autostart",
+        "path": "~/Library/LaunchAgents/com.example.agent.plist"
+      }
+    }
+  ],
+  "errors": []
+}
