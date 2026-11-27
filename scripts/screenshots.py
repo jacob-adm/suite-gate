@@ -66,6 +66,7 @@ SHOTS = [
     ("release-drift", "release-drift diff demo_lib-1.0.0-py3-none-any.whl demo_lib-1.0.1-py3-none-any.whl", "wheels", False),
     ("release-drift-audit-json", "release-drift diff --audit-json demo_lib-1.0.0-py3-none-any.whl demo_lib-1.0.1-py3-none-any.whl", "wheels", True),
     ("glassbox-persist", "glassbox persist --home ~ --since before.json", "home", False),
+    ("suite-gate-gate", "suite-gate gate main feature/triage-bot", "demo", False),
 ]
 
 # Lines of an audit result shown in its screenshot; the whole object is validated.
@@ -211,7 +212,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=str(ROOT / "docs" / "screenshots"))
     out = Path(parser.parse_args().out)
-    tools = ["git-surface", "trust-path", "git-overlap", "release-drift", "glassbox"]
+    tools = ["git-surface", "trust-path", "git-overlap", "release-drift", "glassbox", "suite-gate"]
     missing = [t for t in tools if not shutil.which(t)]
     if missing:
         raise SystemExit(f"not on PATH: {', '.join(missing)}")

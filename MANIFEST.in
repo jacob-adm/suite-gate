@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+# The tests and the docs, examples and fixtures they read ship in the sdist, so the suite runs from it.
+include requirements-test.txt
+graft tests
+graft docs
+graft examples
+graft schema
+graft scripts
+global-exclude __pycache__ *.py[cod]
