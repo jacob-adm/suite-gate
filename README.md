@@ -14,7 +14,7 @@ a coding agent run them.
 - [Screenshots](docs/screenshots): what each tool prints on a demo repository, with and without
   `--audit-json`. Regenerate them with `python3 scripts/screenshots.py` (the tools must be on PATH).
 
-![git surface --audit-json on a demo branch](docs/screenshots/git-surface-audit-json.svg)
+<p align="center"><img src="docs/screenshots/git-surface-audit-json.svg" alt="git surface --audit-json on a demo branch"></p>
 
 Check a result with the standard library only:
 
