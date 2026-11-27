@@ -1,6 +1,6 @@
 # suite-gate
 
-[![Test](https://github.com/jacob-adm/suite-gate/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/jacob-adm/suite-gate/actions/workflows/test.yml) [![PyPI](https://img.shields.io/pypi/v/suite-gate?style=flat-square&color=0F6378&label=PyPI)](https://pypi.org/project/suite-gate/) [![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https://raw.githubusercontent.com/jacob-adm/suite-gate/main/pyproject.toml&style=flat-square&color=0F6378&label=python)](https://github.com/jacob-adm/suite-gate/blob/main/pyproject.toml) [![Licence](https://img.shields.io/pypi/l/suite-gate?style=flat-square&color=0F6378&label=licence)](https://github.com/jacob-adm/suite-gate#license)
+[![PyPI](https://img.shields.io/pypi/v/suite-gate?style=flat-square&color=0F6378&label=PyPI)](https://pypi.org/project/suite-gate/) [![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https://raw.githubusercontent.com/jacob-adm/suite-gate/main/pyproject.toml&style=flat-square&color=0F6378&label=python)](https://github.com/jacob-adm/suite-gate/blob/main/pyproject.toml) [![Licence](https://img.shields.io/pypi/l/suite-gate?style=flat-square&color=0F6378&label=licence)](https://github.com/jacob-adm/suite-gate#license)
 
 <!-- mcp-name: io.github.jacob-adm/suite-gate -->
 
