@@ -19,3 +19,4 @@ Rendered by `scripts/screenshots.py` from the real output of these versions:
 - [release-drift-audit-json.svg](release-drift-audit-json.svg): `release-drift diff --audit-json demo_lib-1.0.0-py3-none-any.whl demo_lib-1.0.1-py3-none-any.whl`
 - [glassbox-persist.svg](glassbox-persist.svg): `glassbox persist --home ~ --since before.json`
 - [suite-gate-gate.svg](suite-gate-gate.svg): `suite-gate gate main feature/triage-bot`
+- [pr-merge-audit-report.png](pr-merge-audit-report.png): `pr-merge-audit` snapshot, build and report of a demo repository with four pull requests, rendered as GitHub shows it (`--pr-merge-audit`, pr-merge-audit 2.2.1)

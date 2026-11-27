@@ -8,7 +8,13 @@ result shown is first checked with suite_gate.envelope.validate, and no
 screenshot may contain the temporary directory, the home directory or the
 user name.
 
-    python3 scripts/screenshots.py [--out DIR]
+    python3 scripts/screenshots.py [--out DIR] [--pr-merge-audit OWNER/NAME]
+
+--pr-merge-audit also writes pr-merge-audit-report.png: a snapshot, build
+and report of the open pull requests of OWNER/NAME, a demo repository whose
+tests run with unittest, rendered with GitHub's Markdown API and stylesheet
+in headless Chrome. It needs network, `gh` signed in with access to that
+repository, and Chrome; the default run needs neither.
 """
 
 import argparse
@@ -16,10 +22,12 @@ import getpass
 import json
 import os
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
 import zipfile
+import zlib
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -202,17 +210,132 @@ def render(title, cmd, output, status):
     return "\n".join(out) + "\n"
 
 
+PMA_PNG = "pr-merge-audit-report.png"
+CHROME = os.environ.get("CHROME", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+MARKDOWN_CSS = "https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css"
+PMA_CONFIG = {
+    "api": "https://api.github.com",
+    "base": "main",
+    "required_status": "",
+    "test_cmd": ["{python}", "-m", "unittest", "discover", "-s", "tests"],
+    "test_prefix": "tests/",
+    "failure_pattern": "^(?:FAIL|ERROR): (\\S+) \\(",
+    "count_pattern": "^Ran (\\d+) test",
+    "skipped_pattern": "skipped=(\\d+)",
+    "message_pattern": "^\\w*Error: (.+)$",
+    "workers": 4,
+}
+
+
+def png_rows(data):
+    """Decode an 8-bit, non-interlaced RGB or RGBA PNG into (width, channels, rows)."""
+    assert data[:8] == b"\x89PNG\r\n\x1a\n", "not a PNG"
+    pos, idat, width = 8, b"", None
+    while pos < len(data):
+        length, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + length]
+        if kind == b"IHDR":
+            width, height, depth, colour, _, _, interlace = struct.unpack(">IIBBBBB", body)
+            if depth != 8 or colour not in (2, 6) or interlace:
+                raise ValueError("only 8-bit non-interlaced RGB or RGBA PNGs are supported")
+            channels = 3 if colour == 2 else 4
+        elif kind == b"IDAT":
+            idat += body
+        pos += 12 + length
+    raw, stride, rows, prev = zlib.decompress(idat), width * channels, [], bytearray(width * channels)
+    for y in range(height):
+        kind, line = raw[y * (stride + 1)], bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
+        for i in range(stride):
+            a = line[i - channels] if i >= channels else 0
+            b, c = prev[i], prev[i - channels] if i >= channels else 0
+            if kind == 1:
+                line[i] = (line[i] + a) & 255
+            elif kind == 2:
+                line[i] = (line[i] + b) & 255
+            elif kind == 3:
+                line[i] = (line[i] + (a + b) // 2) & 255
+            elif kind == 4:
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                line[i] = (line[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        rows.append(bytes(line))
+        prev = line
+    return width, channels, rows
+
+
+def png_encode(width, channels, rows):
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+    header = struct.pack(">IIBBBBB", width, len(rows), 8, 2 if channels == 3 else 6, 0, 0, 0)
+    pixels = zlib.compress(b"".join(b"\x00" + row for row in rows), 9)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", pixels) + chunk(b"IEND", b"")
+
+
+def trim_bottom(data, margin):
+    """Drop the plain rows at the bottom of a PNG, keeping `margin` rows below the content."""
+    width, channels, rows = png_rows(data)
+    background = rows[-1][:channels]
+    last = max((y for y, row in enumerate(rows) if row != background * width), default=0)
+    return png_encode(width, channels, rows[:min(len(rows), last + 1 + margin)])
+
+
+def pr_merge_audit_shot(out, base, repo):
+    work = base / "pr-merge-audit"
+    work.mkdir()
+    env = dict(os.environ, NO_COLOR="1")
+    gh = lambda *args, **kw: subprocess.run(["gh", *args], check=True, text=True, stdout=subprocess.PIPE,
+                                            env=env, **kw).stdout
+    gh("repo", "clone", repo, str(work / "demo.git"), "--", "--mirror", "-q")
+    (work / "config.json").write_text(json.dumps(dict(PMA_CONFIG, repo=repo, remote=str(work / "demo.git")), indent=1))
+    env["GITHUB_TOKEN"] = gh("auth", "token").strip()
+    for step in ("snapshot --date demo",  # writes snapshots/demo.json
+                 "build --snapshot snapshots/demo.json",  # writes results/demo.json
+                 "report --results results/demo.json --out report.md"):
+        subprocess.run(f"pr-merge-audit --config config.json {step}", shell=True, cwd=work, env=env,
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    report = (work / "report.md").read_text()
+    found = leaks(report, base)
+    if found:
+        raise SystemExit(f"pr-merge-audit report contains {found}")
+    html = gh("api", "-X", "POST", "markdown", "--input", "-",
+              input=json.dumps({"text": report, "mode": "gfm"}))
+    (work / "page.html").write_text(
+        f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="{MARKDOWN_CSS}">'
+        "<style>body{margin:0;background:#fff}.markdown-body{box-sizing:border-box;width:900px;padding:32px}"
+        f'</style></head><body><article class="markdown-body">{html}</article></body></html>\n')
+    shot = work / "shot.png"
+    subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
+                    "--window-size=900,2400", f"--screenshot={shot}", (work / "page.html").as_uri()],
+                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    (out / PMA_PNG).write_bytes(trim_bottom(shot.read_bytes(), margin=48))
+
+
 def version(tool, env):
     proc = subprocess.run(f"{tool} --version", shell=True, env=env, text=True,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return proc.stdout.strip().splitlines()[0] if proc.returncode == 0 else "not installed"
+    if proc.returncode == 0:
+        return proc.stdout.strip().splitlines()[0]
+    # A tool without --version (pr-merge-audit): ask the interpreter it is installed with.
+    path = shutil.which(tool, path=env.get("PATH"))
+    first = Path(path).read_bytes().split(b"\n", 1)[0] if path else b""
+    if not first.startswith(b"#!"):
+        return f"{tool} (version unknown)"
+    proc = subprocess.run([first[2:].decode().strip(), "-c",
+                           f"import importlib.metadata as m; print(m.version({tool!r}))"],
+                          text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    return f"{tool} {proc.stdout.strip()}" if proc.returncode == 0 else f"{tool} (version unknown)"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=str(ROOT / "docs" / "screenshots"))
-    out = Path(parser.parse_args().out)
+    parser.add_argument("--pr-merge-audit", metavar="OWNER/NAME",
+                        help=f"also render {PMA_PNG} from this demo repository (network, gh, Chrome)")
+    args = parser.parse_args()
+    out = Path(args.out)
     tools = ["git-surface", "trust-path", "git-overlap", "release-drift", "glassbox", "suite-gate"]
+    if args.pr_merge_audit and not shutil.which("pr-merge-audit"):
+        raise SystemExit("not on PATH: pr-merge-audit")
     missing = [t for t in tools if not shutil.which(t)]
     if missing:
         raise SystemExit(f"not on PATH: {', '.join(missing)}")
@@ -233,6 +356,16 @@ def main():
             (out / f"{name}.svg").write_text(render(name, cmd, text, status))
             index.append(f"- [{name}.svg]({name}.svg): `{cmd}`")
             print(f"{name}.svg  exit {status}")
+        old_index = (out / "README.md").read_text() if (out / "README.md").exists() else ""
+        if args.pr_merge_audit:
+            pr_merge_audit_shot(out, base, args.pr_merge_audit)
+            print(f"{PMA_PNG}  written")
+            index.append(f"- [{PMA_PNG}]({PMA_PNG}): `pr-merge-audit` snapshot, build and report of a demo "
+                         "repository with four pull requests, rendered as GitHub shows it "
+                         f"(`--pr-merge-audit`, {version('pr-merge-audit', env)})")
+        elif (out / PMA_PNG).exists():
+            # Not regenerated this run: keep its entry, and the version it was made with, as it was.
+            index += [line for line in old_index.splitlines() if line.startswith(f"- [{PMA_PNG}]")]
         (out / "README.md").write_text("\n".join(index) + "\n")
 
 
