@@ -90,6 +90,7 @@ Without installing, it also runs from a clone as `python3 -m suite_gate`.
 ```
 suite-gate gate [--repo DIR] [--rules FILE] [--json] BASE REF   one verdict for REF against BASE
 suite-gate mcp [--timeout SECONDS]                              serve the audit tools to an MCP client
+suite-gate session save|check|run [--repo DIR]... [-- COMMAND]  what an agent session left that runs later
 suite-gate validate [FILE]                                      check an audit result object
 ```
 
@@ -134,6 +135,7 @@ claude mcp add suite-gate -- suite-gate mcp
 - [Gate](https://github.com/jacob-adm/suite-gate/blob/main/docs/gate.md): the command, the rules file, the verdict and the JSON result.
 - [MCP server](https://github.com/jacob-adm/suite-gate/blob/main/docs/mcp.md): setting it up, the tools, and how results and errors are returned.
 - [GitHub Action](https://github.com/jacob-adm/suite-gate/blob/main/docs/action.md): the gate on every pull request, with findings annotated on their lines.
+- [Session check](https://github.com/jacob-adm/suite-gate/blob/main/docs/session.md): a glassbox snapshot before an agent session and a report after it, by hand, around one command, or as Claude Code hooks.
 - [Result format](https://github.com/jacob-adm/suite-gate/blob/main/docs/format.md): the object each tool prints with `--audit-json`, its exit status rules, and the
   [JSON Schema](https://github.com/jacob-adm/suite-gate/blob/main/schema/audit-result-1.schema.json) with
   [examples](https://github.com/jacob-adm/suite-gate/tree/main/examples) that pass and fail.

@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import __version__, action, gate, mcp
+from . import __version__, action, gate, mcp, session
 from .envelope import validate
 
 
@@ -32,6 +32,28 @@ def main(argv=None):
                    help="release-drift: read packages from DIR and query no registry")
     g.add_argument("--timeout", type=int, default=600, metavar="SECONDS",
                    help="longest one tool may run (default 600)")
+    s = sub.add_parser("session", help="what an agent session left behind that runs later "
+                                       "(glassbox persist before and after)")
+    ss = s.add_subparsers(dest="action", metavar="ACTION")
+    ss.required = True
+    for name, text in (("save", "snapshot the persistence points before a session"),
+                       ("check", "compare with the snapshot after a session"),
+                       ("run", "snapshot, run COMMAND, compare")):
+        p_ = ss.add_parser(name, help=text)
+        where = p_.add_mutually_exclusive_group()
+        where.add_argument("--state", metavar="FILE",
+                           help="snapshot file (default: $XDG_STATE_HOME/suite-gate/session.snapshot)")
+        where.add_argument("--hook", action="store_true",
+                           help="read a Claude Code hook's JSON on standard input and keep one "
+                                "snapshot per session_id")
+        p_.add_argument("--home", metavar="DIR", help="glassbox: use DIR instead of $HOME")
+        p_.add_argument("--repo", action="append", default=[], metavar="DIR",
+                        help="glassbox: also watch DIR's git hooks, config and agent configs")
+        p_.add_argument("--timeout", type=int, default=600, metavar="SECONDS")
+        if name != "save":
+            p_.add_argument("--json", action="store_true", help="print the audit result object")
+        if name == "run":
+            p_.add_argument("argv", nargs=argparse.REMAINDER, metavar="-- COMMAND")
     sub.add_parser("action", help="run the gate as a GitHub Actions step (reads GATE_* and "
                                   "GITHUB_* from the environment)")
     v = sub.add_parser("validate", help="check an audit result object (FILE or standard input)")
@@ -47,6 +69,8 @@ def main(argv=None):
         sys.stdout.write(json.dumps(result, indent=2, sort_keys=True) + "\n" if args.json
                          else gate.render(result))
         return result["exit"]
+    if args.command == "session":
+        return session.main(args)
     if args.command == "action":
         return action.main()
     if args.command == "mcp":
