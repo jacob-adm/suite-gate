@@ -13,6 +13,11 @@ suite-gate session run   [--state FILE] [--home DIR] [--repo DIR]... [--json] --
 
 It needs glassbox 0.6.0 or later on `PATH`.
 
+<p align="center"><img src="diagrams/session.svg" alt="Session check: snapshot before, compare after"></p>
+
+`run -- COMMAND` does all three around one command, and exits with the command's own status
+when nothing was added or changed.
+
 ## Around one command
 
 `run` saves a snapshot, runs COMMAND with its own standard input, output and error, then

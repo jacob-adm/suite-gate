@@ -79,6 +79,8 @@ Without installing, it also runs from a clone as `python3 -m suite_gate`.
 
 ## How it works
 
+<p align="center"><img src="https://raw.githubusercontent.com/jacob-adm/suite-gate/main/docs/diagrams/gate.svg" alt="How the gate picks its checks and reaches a verdict"></p>
+
 1. **Find what the branch changes.** The gate takes the merge base of BASE and REF and lists the
    paths REF changes since then, as a pull request's "files changed" does.
 2. **Pick the checks.** The rules file names each check and when it runs: git-surface always,

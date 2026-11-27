@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant Agent as Coding agent (MCP client)
+    participant Server as suite-gate mcp
+    participant Tool as Audit tool
+    Agent->>Server: list tools
+    Server-->>Agent: gate, git_surface, trust_path, ... (all read-only)
+    Agent->>Server: call gate {repo, base, ref}, or one tool
+    Server->>Tool: run with --audit-json (argument list, no shell)
+    Tool-->>Server: audit-result/1 object, exit status
+    Server->>Server: validate the object, check tool name and exit status
+    alt the object is valid
+        Server-->>Agent: structuredContent + JSON text, isError false (findings included)
+    else missing tool, bad argument, invalid object or timeout
+        Server-->>Agent: isError true, one line of text
+    end

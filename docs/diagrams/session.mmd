@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant User as You or Claude Code hooks
+    participant SG as suite-gate session
+    participant GB as glassbox persist
+    participant Agent as Agent session
+    User->>SG: save (SessionStart with --hook)
+    SG->>GB: snapshot of persistence points
+    GB-->>SG: paths, categories, SHA-256 (no contents)
+    User->>Agent: the session runs
+    User->>SG: check (SessionEnd with --hook)
+    SG->>GB: persist --audit-json --since the snapshot
+    GB-->>SG: points added, changed, removed
+    SG-->>User: report or audit result object
+    SG-->>User: exit 1 if a point was added or changed, 2 if glassbox failed, else 0

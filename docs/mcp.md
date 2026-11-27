@@ -5,6 +5,8 @@ standard input and output: JSON-RPC 2.0, one message per line, protocol version 
 Each MCP tool runs one audit tool with `--audit-json` and returns its
 [audit result object](format.md) unchanged.
 
+<p align="center"><img src="diagrams/mcp.svg" alt="An agent calling suite-gate's MCP server"></p>
+
 ## Set up
 
 Install suite-gate and the audit tools you want the agent to have:
