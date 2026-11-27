@@ -60,7 +60,8 @@ Each input reaches the gate through an environment variable, never inside a scri
 - **The log** has the gate's text report: the verdict, one line per check, then each finding.
 - **Annotations:** each finding with a fail severity is an error on its file and line, and each
   with a warn severity a warning; GitHub shows them in the pull request's "Files changed". A
-  finding about a location outside the repository (glassbox) has no file. A check that could not
+  release-drift finding is about a file inside a downloaded package, so it is shown on the
+  lockfile that pulled the package in. A check that could not
   run is an error annotation naming the tool and the reason.
 - **The job summary** has the verdict, the commits and rules, a table of the checks (ran,
   skipped with the reason, or error), and a table of the findings with their evidence.

@@ -140,6 +140,16 @@ class Annotations(unittest.TestCase):
             "::error title=x did not run::x is not installed",
         ])
 
+    def test_lockfile_findings_point_at_the_lockfile(self):
+        result = {"checks": [{"tool": "release-drift", "status": "ran", "reason": "r",
+                              "path": "requirements.txt", "result": {"errors": [], "findings": [
+                                  {"rule": "release-drift.build.changed", "severity": "high",
+                                   "message": "six 1.16.0 -> 1.17.0: changed setup.py",
+                                   "evidence": {"path": "setup.py"}}]}}]}
+        self.assertEqual(action.annotations(result, self.rules), [
+            "::error file=requirements.txt,title=release-drift.build.changed (high)::"
+            "six 1.16.0 -> 1.17.0: changed setup.py"])
+
     def test_summary_escapes_table_cells(self):
         result = {"verdict": "warn", "ref": {"name": "r", "commit": "a" * 40},
                   "base": {"name": "b", "commit": "b" * 40},

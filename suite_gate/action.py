@@ -38,7 +38,10 @@ def annotations(result, rules):
                 continue
             props = ["title=%s" % _escape_property("%s (%s)" % (f["rule"], f["severity"]))]
             evidence = f["evidence"]
-            if "path" in evidence and not evidence["path"].startswith(("~", "/")):
+            if "path" in check:
+                # release-drift's paths are inside a downloaded package: point at the lockfile.
+                props.insert(0, "file=%s" % _escape_property(check["path"]))
+            elif "path" in evidence and not evidence["path"].startswith(("~", "/")):
                 props.insert(0, "file=%s" % _escape_property(evidence["path"]))
                 if "line" in evidence:
                     props.insert(1, "line=%d" % evidence["line"])
