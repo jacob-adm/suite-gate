@@ -1,6 +1,3 @@
-git-surface==0.4.0
-trust-path==0.8.1
-release-drift==0.7.0
-git-overlap==0.7.0
+-r requirements-tools.txt
 pr-merge-audit==2.3.0
 jsonschema
