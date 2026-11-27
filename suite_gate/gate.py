@@ -53,7 +53,7 @@ def load_rules(path=None):
         raise GateError("cannot read rules %s: %s" % (path, exc))
     if not isinstance(rules, dict):
         raise GateError("rules: not an object")
-    extra = sorted(set(rules) - {"format", "name", "version", "checks", "verdict"})
+    extra = sorted(set(rules) - {"format", "name", "version", "checks", "verdict", "ignore_paths"})
     if extra:
         raise GateError("rules: unknown key %s" % extra[0])
     if rules.get("format") != RULES_FORMAT:
@@ -79,6 +79,8 @@ def load_rules(path=None):
         if "others" in check and (not isinstance(check["others"], str)
                                   or not check["others"].startswith("refs/")):
             raise GateError("%s.others: a ref prefix such as refs/heads/" % where)
+    if "ignore_paths" in rules:
+        _patterns(rules["ignore_paths"], "rules.ignore_paths")
     verdict = rules.get("verdict")
     if not isinstance(verdict, dict) or set(verdict) != {"fail", "warn"}:
         raise GateError("rules.verdict: an object with fail and warn")
@@ -225,10 +227,32 @@ HANDLERS = {"git-surface": _surface, "trust-path": _trust, "release-drift": _dri
 
 # --- verdict ----------------------------------------------------------------------------------
 
+def finding_path(check, finding):
+    """The repository path a finding is about: a lockfile check's lockfile (release-drift's own
+    paths are inside the downloaded package), else the finding's evidence path, else None."""
+    return check.get("path") or finding.get("evidence", {}).get("path")
+
+
+def is_ignored(check, finding, rules):
+    """True when the finding's path matches one of the rules' ignore_paths."""
+    patterns = rules.get("ignore_paths")
+    if not patterns:
+        return False
+    path = finding_path(check, finding)
+    return path is not None and any(re.search(p, path) for p in patterns)
+
+
+def counted(checks, rules):
+    """(check, finding) for every finding that counts toward the verdict."""
+    return [(c, f) for c in checks if "result" in c for f in c["result"]["findings"]
+            if not is_ignored(c, f, rules)]
+
+
 def verdict(checks, rules):
-    """fail if a finding has a fail severity; else error if a check or tool errored; else warn
-    if a finding has a warn severity; else pass."""
-    severities = [f["severity"] for c in checks if "result" in c for f in c["result"]["findings"]]
+    """fail if a counted finding has a fail severity; else error if a check or tool errored;
+    else warn if a counted finding has a warn severity; else pass. A finding whose path matches
+    the rules' ignore_paths is not counted."""
+    severities = [f["severity"] for _, f in counted(checks, rules)]
     errored = any(c["status"] == "error" or c.get("result", {}).get("exit") == 2 for c in checks)
     if any(s in rules["verdict"]["fail"] for s in severities):
         return "fail"
@@ -263,6 +287,10 @@ def gate(repo, base, ref, rules_path=None, runner=None, lockfile_cache=None, exc
         "merge_base": merge_base,
         "changed": paths,
         "checks": checks,
+        "ignored": [{"tool": c["tool"], "rule": f["rule"], "severity": f["severity"],
+                     "path": finding_path(c, f)}
+                    for c in checks if "result" in c for f in c["result"]["findings"]
+                    if f["severity"] != "info" and is_ignored(c, f, rules)],
     }
     result["verdict"] = verdict(checks, rules)
     result["exit"] = EXIT[result["verdict"]]
@@ -275,10 +303,13 @@ def render(result):
                                                 result["base"]["name"], result["rules"]["name"],
                                                 result["rules"]["version"])]
     findings = []
+    # Findings whose path the rules ignore: kept in the result, left out of the counts here.
+    ignored = {(i["tool"], i["rule"], i["path"]) for i in result.get("ignored", [])}
     for c in result["checks"]:
         what = c["tool"]
         if c["status"] == "ran":
-            found = [f for f in c["result"]["findings"] if f["severity"] != "info"]
+            found = [f for f in c["result"]["findings"] if f["severity"] != "info"
+                     and (c["tool"], f["rule"], finding_path(c, f)) not in ignored]
             counts = {}
             for f in found:
                 counts[f["severity"]] = counts.get(f["severity"], 0) + 1
@@ -291,6 +322,9 @@ def render(result):
             lines.append("  %-14s skipped  %s" % (what, c["reason"]))
         else:
             lines.append("  %-14s error    %s" % (what, c["error"]))
+    if result.get("ignored"):
+        lines.append("  %-14s %d finding(s) whose path matches the rules' ignore_paths"
+                     % ("ignored", len(result["ignored"])))
     order = {s: i for i, s in enumerate(SEVERITIES)}
     for f in sorted(findings, key=lambda f: order[f["severity"]]):
         where = f["evidence"].get("path", "")

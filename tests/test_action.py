@@ -150,6 +150,13 @@ class Annotations(unittest.TestCase):
             "::error file=requirements.txt,title=release-drift.build.changed (high)::"
             "six 1.16.0 -> 1.17.0: changed setup.py"])
 
+    def test_ignored_findings_get_no_annotation(self):
+        rules = dict(self.rules, ignore_paths=["^dist/"])
+        findings = [{"rule": "a.b", "severity": "high", "message": "m", "evidence": {"path": "dist/x.js"}},
+                    {"rule": "a.c", "severity": "high", "message": "n", "evidence": {"path": "src/x.py"}}]
+        self.assertEqual(action.annotations(self.result(findings), rules),
+                         ["::error file=src/x.py,title=a.c (high)::n"])
+
     def test_summary_escapes_table_cells(self):
         result = {"verdict": "warn", "ref": {"name": "r", "commit": "a" * 40},
                   "base": {"name": "b", "commit": "b" * 40},

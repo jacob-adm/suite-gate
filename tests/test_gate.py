@@ -130,6 +130,25 @@ class Verdicts(unittest.TestCase):
         block = text.split("## Quick start", 1)[1].split("```text\n", 1)[1].split("```", 1)[0]
         self.assertEqual(block, proc.stdout)
 
+    def test_ignore_paths_on_a_real_branch(self):
+        """The ci branch's only high finding is a workflow change; ignoring workflows passes it,
+        and the finding is still in git-surface's result and in the ignored list."""
+        rules = json.loads(Path(gate.DEFAULT_RULES).read_text())
+        rules["ignore_paths"] = ["^\\.github/workflows/"]
+        path = os.path.join(self.tmp, "rules-ignore.json")
+        Path(path).write_text(json.dumps(rules))
+        proc, result = self.run_gate("ci", "--rules", path)
+        self.assertEqual((proc.returncode, result["verdict"]), (0, "pass"))
+        self.assertEqual(result["ignored"], [{"tool": "git-surface", "rule": "git-surface.ci",
+                                              "severity": "high", "path": ".github/workflows/ci.yml"}])
+        surface = [c for c in result["checks"] if c["tool"] == "git-surface"][0]["result"]
+        self.assertEqual([f["rule"] for f in surface["findings"]], ["git-surface.ci"])
+        text = subprocess.run([sys.executable, "-m", "suite_gate", "gate", "--repo", self.repo,
+                               "--lockfile-cache", self.cache, "--rules", path, "main", "ci"],
+                              env=self.env, stdout=subprocess.PIPE, universal_newlines=True).stdout
+        self.assertIn("  git-surface    ran      nothing found (always runs)", text)
+        self.assertIn("  ignored        1 finding(s) whose path matches the rules' ignore_paths", text)
+
     def test_missing_tools_make_an_error_verdict(self):
         """With no audit tool on PATH every check errors, and the gate cannot pass."""
         bare = tempfile.mkdtemp()
@@ -179,6 +198,44 @@ class Precedence(unittest.TestCase):
         self.assertEqual(gate.verdict([check(severities=["medium"])], rules), "fail")
 
 
+class IgnorePaths(unittest.TestCase):
+    """Findings on paths the rules ignore stay in the result but do not decide the verdict."""
+
+    def setUp(self):
+        self.rules = dict(gate.load_rules()[0], ignore_paths=["(^|/)dist/"])
+
+    def finding(self, severity, path):
+        return {"rule": "t.x", "severity": severity, "message": "m", "evidence": {"path": path}}
+
+    def check(self, *findings, path=None):
+        c = {"tool": "git-surface", "status": "ran",
+             "result": {"findings": list(findings), "exit": 1, "errors": []}}
+        if path:
+            c["path"] = path
+        return c
+
+    def test_ignored_high_does_not_fail(self):
+        checks = [self.check(self.finding("high", "app/dist/assets/index.js"))]
+        self.assertEqual(gate.verdict(checks, self.rules), "pass")
+        self.assertEqual(gate.verdict(checks, gate.load_rules()[0]), "fail")
+
+    def test_other_findings_still_count(self):
+        checks = [self.check(self.finding("high", "dist/a.js"), self.finding("medium", "src/a.py"))]
+        self.assertEqual(gate.verdict(checks, self.rules), "warn")
+
+    def test_lockfile_check_matches_on_the_lockfile(self):
+        """release-drift's evidence paths are inside the package; the lockfile is what is ignored."""
+        rules = dict(self.rules, ignore_paths=["^vendor/"])
+        inside = self.finding("high", "setup.py")
+        self.assertEqual(gate.verdict([self.check(inside, path="vendor/requirements.txt")], rules), "pass")
+        self.assertEqual(gate.verdict([self.check(inside, path="requirements.txt")], rules), "fail")
+
+    def test_an_error_is_never_ignored(self):
+        checks = [self.check(self.finding("high", "dist/a.js")),
+                  {"tool": "x", "status": "error", "error": "e"}]
+        self.assertEqual(gate.verdict(checks, self.rules), "error")
+
+
 class Rules(unittest.TestCase):
     def write(self, rules):
         path = os.path.join(tempfile.mkdtemp(), "rules.json")
@@ -207,6 +264,8 @@ class Rules(unittest.TestCase):
             (dict(base, verdict={"fail": ["high"], "warn": ["high"]}), "cannot both fail and warn"),
             (dict(base, verdict={"fail": ["critical"], "warn": []}), "rules.verdict.fail:"),
             (dict(base, version="1"), "version (an integer)"),
+            (dict(base, ignore_paths=["("]), "rules.ignore_paths:"),
+            (dict(base, ignore_paths="dist/"), "rules.ignore_paths:"),
         ]
         for rules, text in cases:
             with self.subTest(text):

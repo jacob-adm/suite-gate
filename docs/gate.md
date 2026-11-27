@@ -64,6 +64,12 @@ and the verdict: `high` fails; `medium` and `low` warn.
   `for_each_changed`. git-overlap needs `others`, a ref prefix.
 - `verdict.fail` and `verdict.warn` are lists of `high`, `medium` and `low`; a severity cannot be
   in both. A severity in neither does not affect the verdict.
+- `ignore_paths`, optional, is a list of regular expressions. A finding whose path matches one
+  does not count toward the verdict: a built bundle such as `dist/assets/index.js` can be left out
+  this way. The finding is not removed. It stays in its tool's result unchanged, is listed under
+  `ignored` in the gate result, and is counted on an `ignored` line of the text report. For a
+  release-drift lockfile check the path matched is the lockfile's, since the finding's own path is
+  inside the downloaded package. A check that could not run is never ignored.
 - Any other key, or a value of the wrong shape, is refused before anything runs (exit 2).
 
 Change `name` or `version` when you change the rules: both, and the file's SHA-256, are in every
@@ -97,6 +103,7 @@ With `--json` the gate prints one object:
 | `base`, `ref` | each `name` as given and the full `commit` it named |
 | `merge_base` | the commit the changes are taken from |
 | `changed` | the changed paths, sorted |
+| `ignored` | each finding above `info` that the rules' `ignore_paths` left out of the verdict: `tool`, `rule`, `severity`, `path` (empty when none) |
 | `checks` | one object per check run or skipped, in order: `tool`, `status` (`ran`, `skipped` or `error`), `reason`, `path` for a lockfile, `result` (the tool's audit result object, unchanged) or `error` (why it could not run) |
 | `verdict`, `exit` | as above |
 
