@@ -9,7 +9,8 @@ result format before it is used, and a tool that fails is reported as an error, 
 
 The gate's release-drift check downloads packages and queries PyPI or npm when a lockfile
 changed, unless `--lockfile-cache DIR` is given. Nothing else uses the network. The MCP server
-offers no option that writes files.
+offers no option that writes files. `suite-gate session` writes only its glassbox snapshot
+(paths, categories and hashes, no contents) under `$XDG_STATE_HOME/suite-gate` or `--state`.
 
 ## Reporting a vulnerability
 
