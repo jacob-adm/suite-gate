@@ -37,6 +37,7 @@ ready.
 | Tool | Runs | Arguments |
 | --- | --- | --- |
 | `list_audit_tools` | `--version` of each tool | none |
+| `gate` | `suite-gate gate BASE REF` with the built-in rules; see [Gate](gate.md) | `repo`, `base`, `ref` |
 | `git_surface` | `git surface --audit-json BASE`, refs on standard input | `repo`, `base`, `refs` |
 | `git_overlap` | `git footprint BASE`, then `git overlap --audit-json` | `repo`, `base`, `refs`, optional `with` |
 | `git_pairmerge` | `git pairmerge --audit-json`, pairs on standard input | `repo`, `pairs` (`[[refA, refB], ...]`), optional `onto` |
@@ -50,8 +51,9 @@ ready.
 | `glassbox_persist` | `glassbox persist --audit-json --since FILE` | `since`, optional `home`, `repos` |
 
 Every tool is marked read-only: none of the options that write (`persist --save`, `report
---out`, `build --emit-branch`) is offered. The two that reach the network
-(`release_drift_lockfile`, `release_drift_provenance`) are marked `openWorldHint`.
+--out`, `build --emit-branch`) is offered. The three that can reach the network
+(`gate`, through release-drift, `release_drift_lockfile` and `release_drift_provenance`) are
+marked `openWorldHint`.
 
 ## Results
 

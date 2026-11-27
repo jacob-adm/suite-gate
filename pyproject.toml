@@ -17,3 +17,6 @@ suite-gate = "suite_gate.cli:main"
 
 [tool.setuptools]
 packages = ["suite_gate"]
+
+[tool.setuptools.package-data]
+suite_gate = ["rules/*.json"]

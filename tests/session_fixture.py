@@ -104,3 +104,36 @@ def build(root):
     with open(os.path.join(root, "results.json"), "w") as handle:
         json.dump(results, handle)
     return home
+
+
+def build_gate(root):
+    """A repository for the gate, with one branch per verdict, and a package cache for
+    release-drift so that no registry is asked. Return (repo, cache, HOME)."""
+    home = os.path.join(root, "home")
+    os.makedirs(home)
+    repo = os.path.join(root, "app")
+    os.makedirs(repo)
+    _git(repo, home, "init", "-q", "-b", "main")
+    _commit(repo, home, "init", {
+        "README.md": "# app\n", "app.py": "print(1)\n", "requirements.txt": "demo==1.0\n",
+        ".github/workflows/ci.yml": "on: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n"
+                                    "    steps:\n      - run: echo test\n"})
+    branches = [
+        ("clean", {"app.py": "print(2)\n"}),
+        ("ci", {".github/workflows/ci.yml": "on: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n"
+                                            "    steps:\n      - run: echo test2\n"}),
+        ("notes-a", {"NOTES.md": "a\n"}),
+        ("notes-b", {"NOTES.md": "b\n"}),
+        ("deps", {"requirements.txt": "demo==1.1\n"}),
+        ("newlock", {"package-lock.json": "{}\n"}),
+    ]
+    for name, files in branches:
+        _git(repo, home, "checkout", "-q", "-b", name, "main")
+        _commit(repo, home, name, files)
+    _git(repo, home, "checkout", "-q", "main")
+    cache = os.path.join(root, "cache")
+    for version, extra in (("1.0", {}), ("1.1", {"demo_init.pth": "import os; exec('print(1)')\n"})):
+        directory = os.path.join(cache, "pypi", "demo", version)
+        os.makedirs(directory)
+        _sdist(os.path.join(directory, "demo-%s.tar.gz" % version), version, extra)
+    return repo, cache, home

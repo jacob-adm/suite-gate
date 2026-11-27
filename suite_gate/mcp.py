@@ -231,6 +231,15 @@ def _glassbox_persist(r, args):
     return r.audit("glassbox", [r.exe("glassbox", "glassbox"), "persist", "--audit-json"] + rest)
 
 
+def _gate(r, args):
+    from . import gate
+    repo, base, ref = _dir(args, "repo"), _text(args, "base"), _text(args, "ref")
+    try:
+        return gate.gate(repo, base, ref, runner=r)
+    except gate.GateError as exc:
+        raise ToolError(str(exc))
+
+
 def _s(description):
     return {"type": "string", "description": description}
 
@@ -245,6 +254,13 @@ REFS = {"type": "array", "items": {"type": "string"}, "minItems": 1,
 
 # name -> (description, input schema, reaches the network, handler)
 TOOLS = {
+    "gate": (
+        "suite-gate: one verdict (pass, warn, fail or error) for ref against base, from the "
+        "built-in rules: git-surface always, trust-path when workflows changed, release-drift "
+        "for each changed lockfile (queries registries), git-overlap against the other local "
+        "branches. Returns every tool's audit result with its evidence.",
+        _schema({"repo": _s("Repository directory"), "base": _s("Base branch, e.g. main"),
+                 "ref": _s("Branch to judge")}, ["repo", "base", "ref"]), True, _gate),
     "git_surface": (
         "git-surface: what each ref changes, since its merge base with base, that runs or is "
         "trusted (CI, hooks, agent files, install scripts, dependencies, hidden text).",

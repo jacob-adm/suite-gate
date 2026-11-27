@@ -213,7 +213,7 @@ class Rules(unittest.TestCase):
             self.assertTrue(tool["annotations"]["readOnlyHint"])
             self.assertFalse(tool["inputSchema"].get("additionalProperties", False))
         network = {t["name"] for t in tools if t["annotations"]["openWorldHint"]}
-        self.assertEqual(network, {"release_drift_lockfile", "release_drift_provenance"})
+        self.assertEqual(network, {"gate", "release_drift_lockfile", "release_drift_provenance"})
 
 
 if __name__ == "__main__":
