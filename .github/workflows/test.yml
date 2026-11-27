@@ -41,4 +41,5 @@ jobs:
           echo "$PWD/glassbox-0.6.0-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
       - run: python -m unittest discover -s tests -v 2>&1 | tee out.txt
       - name: No test was skipped
-        run: "! grep -q skipped out.txt"
+        # unittest prints "... skipped 'reason'" per test and "(skipped=N)" in the summary.
+        run: "! grep -qE \"skipped '|[(]skipped=\" out.txt"
