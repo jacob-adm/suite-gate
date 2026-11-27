@@ -62,7 +62,9 @@ SHOTS = [
     ("trust-path", "trust-path --ref feature/triage-bot .", "demo", False),
     ("trust-path-audit-json", "trust-path --ref feature/triage-bot --audit-json .", "demo", True),
     ("git-overlap", "printf 'feature/triage-bot\\nfix/login-typo\\n' | git footprint main | git overlap", "demo", False),
+    ("git-overlap-audit-json", "printf 'feature/triage-bot\\nfix/login-typo\\n' | git footprint main | git overlap --audit-json", "demo", True),
     ("release-drift", "release-drift diff demo_lib-1.0.0-py3-none-any.whl demo_lib-1.0.1-py3-none-any.whl", "wheels", False),
+    ("release-drift-audit-json", "release-drift diff --audit-json demo_lib-1.0.0-py3-none-any.whl demo_lib-1.0.1-py3-none-any.whl", "wheels", True),
     ("glassbox-persist", "glassbox persist --home ~ --since before.json", "home", False),
 ]
 
