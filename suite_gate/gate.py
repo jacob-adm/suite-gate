@@ -16,7 +16,10 @@ from .mcp import Runner, ToolError, _text
 
 FORMAT = "gate-result/1"
 RULES_FORMAT = "gate-rules/1"
-DEFAULT_RULES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rules", "default.json")
+RULES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rules")
+DEFAULT_RULES = os.path.join(RULES_DIR, "default.json")
+# Built-in rules by name: default (local branches) and ci (a CI checkout, branches under origin/).
+BUILTIN = {"default": DEFAULT_RULES, "ci": os.path.join(RULES_DIR, "ci.json")}
 SEVERITIES = ("high", "medium", "low")
 # The keys each check may have, besides "tool"; a key in brackets is required.
 CHECK_KEYS = {"git-surface": {}, "trust-path": {"when_changed": False},
@@ -41,7 +44,7 @@ def _patterns(value, where):
 
 def load_rules(path=None):
     """Read and check a rules file; return (rules, its sha256, the path read)."""
-    path = path or DEFAULT_RULES
+    path = BUILTIN.get(path, path) if path else DEFAULT_RULES
     try:
         with open(path, "rb") as handle:
             data = handle.read()
@@ -195,8 +198,9 @@ def _lockfile(runner, ctx, path, old, new):
 
 def _overlap(runner, ctx, check):
     names = _git(ctx["repo"], "for-each-ref", "--format=%(refname:short)", check["others"])
+    skip = {ctx["ref"], ctx["base"]} | set(ctx.get("exclude", ()))
     others = [n for n in names.decode("utf-8", "surrogateescape").splitlines()
-              if n and n not in (ctx["ref"], ctx["base"])]
+              if n and n not in skip and not n.endswith("/HEAD") and n != "origin"]
     if not others:
         return [_entry("git-overlap", "no other branch under %s" % check["others"])]
     reason = "against %d other branch(es) under %s" % (len(others), check["others"])
@@ -235,7 +239,7 @@ def verdict(checks, rules):
     return "pass"
 
 
-def gate(repo, base, ref, rules_path=None, runner=None, lockfile_cache=None):
+def gate(repo, base, ref, rules_path=None, runner=None, lockfile_cache=None, exclude=()):
     """Run the gate; return the gate result object. Raises GateError if it cannot start."""
     runner = runner or Runner()
     rules, sha256, path = load_rules(rules_path)
@@ -246,7 +250,8 @@ def gate(repo, base, ref, rules_path=None, runner=None, lockfile_cache=None):
     base_commit, ref_commit = _commit(repo, base), _commit(repo, ref)
     merge_base, paths = changed(repo, base_commit, ref_commit)
     ctx = {"repo": repo, "base": base, "ref": ref, "ref_commit": ref_commit,
-           "merge_base": merge_base, "paths": paths, "lockfile_cache": lockfile_cache}
+           "merge_base": merge_base, "paths": paths, "lockfile_cache": lockfile_cache,
+           "exclude": exclude}
     checks = []
     for check in rules["checks"]:
         checks.extend(HANDLERS[check["tool"]](runner, ctx, check))

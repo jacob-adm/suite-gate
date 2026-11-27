@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import __version__, gate, mcp
+from . import __version__, action, gate, mcp
 from .envelope import validate
 
 
@@ -22,25 +22,33 @@ def main(argv=None):
     g.add_argument("base", metavar="BASE")
     g.add_argument("ref", metavar="REF")
     g.add_argument("--repo", default=".", metavar="DIR", help="repository (default: .)")
-    g.add_argument("--rules", metavar="FILE", help="rules file (default: the built-in rules)")
+    g.add_argument("--rules", metavar="FILE",
+                   help="rules file, or a built-in name: default (local branches) or ci "
+                        "(branches under origin/, for a CI checkout)")
+    g.add_argument("--exclude", action="append", default=[], metavar="BRANCH",
+                   help="leave BRANCH out of the overlap check (repeatable)")
     g.add_argument("--json", action="store_true", help="print the gate result object")
     g.add_argument("--lockfile-cache", metavar="DIR",
                    help="release-drift: read packages from DIR and query no registry")
     g.add_argument("--timeout", type=int, default=600, metavar="SECONDS",
                    help="longest one tool may run (default 600)")
+    sub.add_parser("action", help="run the gate as a GitHub Actions step (reads GATE_* and "
+                                  "GITHUB_* from the environment)")
     v = sub.add_parser("validate", help="check an audit result object (FILE or standard input)")
     v.add_argument("file", nargs="?", metavar="FILE")
     args = p.parse_args(argv)
     if args.command == "gate":
         try:
             result = gate.gate(args.repo, args.base, args.ref, args.rules,
-                               mcp.Runner(args.timeout), args.lockfile_cache)
+                               mcp.Runner(args.timeout), args.lockfile_cache, args.exclude)
         except (gate.GateError, mcp.ToolError) as exc:
             sys.stderr.write("suite-gate: %s\n" % exc)
             return 2
         sys.stdout.write(json.dumps(result, indent=2, sort_keys=True) + "\n" if args.json
                          else gate.render(result))
         return result["exit"]
+    if args.command == "action":
+        return action.main()
     if args.command == "mcp":
         if args.timeout < 1:
             p.error("--timeout must be at least 1")

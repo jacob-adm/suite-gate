@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # The tests and the docs, examples and fixtures they read ship in the sdist, so the suite runs from it.
-include requirements-test.txt
+include requirements-test.txt requirements-tools.txt action.yml
 graft tests
 graft docs
 graft examples

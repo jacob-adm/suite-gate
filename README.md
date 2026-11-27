@@ -122,6 +122,7 @@ git-surface reports the workflow change as `high`, so the verdict is `fail` and 
 is 1. trust-path ran because a workflow changed and found no path from untrusted input. No
 lockfile changed, so release-drift was skipped.
 
+To run the gate on every pull request, use the [GitHub Action](https://github.com/jacob-adm/suite-gate/blob/main/docs/action.md).
 To give a coding agent the tools, register the MCP server. For Claude Code:
 
 ```sh
@@ -132,6 +133,7 @@ claude mcp add suite-gate -- suite-gate mcp
 
 - [Gate](https://github.com/jacob-adm/suite-gate/blob/main/docs/gate.md): the command, the rules file, the verdict and the JSON result.
 - [MCP server](https://github.com/jacob-adm/suite-gate/blob/main/docs/mcp.md): setting it up, the tools, and how results and errors are returned.
+- [GitHub Action](https://github.com/jacob-adm/suite-gate/blob/main/docs/action.md): the gate on every pull request, with findings annotated on their lines.
 - [Result format](https://github.com/jacob-adm/suite-gate/blob/main/docs/format.md): the object each tool prints with `--audit-json`, its exit status rules, and the
   [JSON Schema](https://github.com/jacob-adm/suite-gate/blob/main/schema/audit-result-1.schema.json) with
   [examples](https://github.com/jacob-adm/suite-gate/tree/main/examples) that pass and fail.
