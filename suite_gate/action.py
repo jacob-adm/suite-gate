@@ -34,7 +34,7 @@ def annotations(result, rules):
     for check in result["checks"]:
         for f in check.get("result", {}).get("findings", []):
             level = "error" if f["severity"] in fail else "warning" if f["severity"] in warn else None
-            if level is None:
+            if level is None or gate.is_ignored(check, f, rules):
                 continue
             props = ["title=%s" % _escape_property("%s (%s)" % (f["rule"], f["severity"]))]
             evidence = f["evidence"]
@@ -66,9 +66,11 @@ def summary(result):
                result["base"]["commit"][:12], result["rules"]["name"], result["rules"]["version"]),
            "", "| Check | Status | Result |", "| --- | --- | --- |"]
     findings = []
+    ignored = {(i["tool"], i["rule"], i["path"]) for i in result.get("ignored", [])}
     for check in result["checks"]:
         if check["status"] == "ran":
-            found = [f for f in check["result"]["findings"] if f["severity"] != "info"]
+            found = [f for f in check["result"]["findings"] if f["severity"] != "info"
+                     and (check["tool"], f["rule"], gate.finding_path(check, f)) not in ignored]
             findings.extend(found)
             text = ", ".join("%d %s" % (sum(f["severity"] == s for f in found), s)
                              for s in ("high", "medium", "low")
@@ -81,6 +83,9 @@ def summary(result):
             text = check["error"]
         status = check["status"] + ("" if check["status"] != "ran" else " (%s)" % check["reason"])
         out.append("| %s | %s | %s |" % (_cell(check["tool"]), _cell(status), _cell(text)))
+    if result.get("ignored"):
+        out += ["", "%d finding(s) whose path matches the rules' `ignore_paths` are not counted; "
+                "they are in the result file." % len(result["ignored"])]
     if findings:
         out += ["", "| Severity | Rule | Finding | Evidence |", "| --- | --- | --- | --- |"]
         for f in sorted(findings, key=lambda f: SEVERITY_ORDER[f["severity"]]):

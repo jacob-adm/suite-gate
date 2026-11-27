@@ -63,7 +63,8 @@ Each input reaches the gate through an environment variable, never inside a scri
 - **Annotations:** each finding with a fail severity is an error on its file and line, and each
   with a warn severity a warning; GitHub shows them in the pull request's "Files changed". A
   release-drift finding is about a file inside a downloaded package, so it is shown on the
-  lockfile that pulled the package in. A check that could not
+  lockfile that pulled the package in. A finding on a path the rules' `ignore_paths` match gets
+  no annotation; the job summary counts it, and the result file lists it. A check that could not
   run is an error annotation naming the tool and the reason.
 - **The job summary** has the verdict, the commits and rules, a table of the checks (ran,
   skipped with the reason, or error), and a table of the findings with their evidence.
