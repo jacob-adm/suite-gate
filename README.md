@@ -132,6 +132,7 @@ claude mcp add suite-gate -- suite-gate mcp
 
 ## Documentation
 
+- [For coding agents](https://github.com/jacob-adm/suite-gate/blob/main/docs/AGENTS.md): how an agent runs suite-gate, reads `--audit-json` and cites the evidence.
 - [Gate](https://github.com/jacob-adm/suite-gate/blob/main/docs/gate.md): the command, the rules file, the verdict and the JSON result.
 - [MCP server](https://github.com/jacob-adm/suite-gate/blob/main/docs/mcp.md): setting it up, the tools, and how results and errors are returned.
 - [GitHub Action](https://github.com/jacob-adm/suite-gate/blob/main/docs/action.md): the gate on every pull request, with findings annotated on their lines.
