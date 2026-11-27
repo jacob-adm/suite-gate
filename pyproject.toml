@@ -5,12 +5,28 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "suite-gate"
 version = "0.1.0"
-description = "A shared result format for command-line audit tools, and an MCP server over them."
+description = "One result format for six audit tools, a gate that gives one verdict per branch, and an MCP server that runs them."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 dependencies = []
+keywords = ["audit", "code-review", "pull-request", "mcp", "supply-chain", "security", "cli"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://github.com/jacob-adm/suite-gate"
+Documentation = "https://github.com/jacob-adm/suite-gate/tree/main/docs"
+Source = "https://github.com/jacob-adm/suite-gate"
+Issues = "https://github.com/jacob-adm/suite-gate/issues"
 
 [project.scripts]
 suite-gate = "suite_gate.cli:main"

@@ -13,6 +13,19 @@ def cli(*args, data=None):
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
 
+class Readme(unittest.TestCase):
+    def test_version_shown_is_the_version(self):
+        out = cli("--version").stdout
+        text = (ROOT / "README.md").read_text()
+        shown = text.split("suite-gate --version", 1)[1].split("```text\n", 1)[1].split("```", 1)[0]
+        self.assertEqual(shown, out)
+
+    def test_every_command_in_the_readme_exists(self):
+        for command in ("gate", "mcp", "validate"):
+            with self.subTest(command):
+                self.assertEqual(cli(command, "--help").returncode, 0)
+
+
 class Validate(unittest.TestCase):
     def test_valid_file_exits_0(self):
         out = cli("validate", "examples/valid/git-surface-finding.json")

@@ -6,7 +6,8 @@ Rendered by `scripts/screenshots.py` from the real output of these versions:
 - trust-path 0.8.1
 - git-overlap 0.7.0
 - release-drift 0.7.0
-- glassbox 0.5.1
+- glassbox 0.6.0
+- suite-gate 0.1.0
 
 - [git-surface.svg](git-surface.svg): `printf 'feature/triage-bot\nfix/login-typo\n' | git surface main`
 - [git-surface-audit-json.svg](git-surface-audit-json.svg): `echo feature/triage-bot | git surface --audit-json main`
@@ -17,3 +18,4 @@ Rendered by `scripts/screenshots.py` from the real output of these versions:
 - [release-drift.svg](release-drift.svg): `release-drift diff demo_lib-1.0.0-py3-none-any.whl demo_lib-1.0.1-py3-none-any.whl`
 - [release-drift-audit-json.svg](release-drift-audit-json.svg): `release-drift diff --audit-json demo_lib-1.0.0-py3-none-any.whl demo_lib-1.0.1-py3-none-any.whl`
 - [glassbox-persist.svg](glassbox-persist.svg): `glassbox persist --home ~ --since before.json`
+- [suite-gate-gate.svg](suite-gate-gate.svg): `suite-gate gate main feature/triage-bot`

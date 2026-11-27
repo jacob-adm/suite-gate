@@ -122,6 +122,14 @@ class Verdicts(unittest.TestCase):
         block = text.split("For the `ci` branch", 1)[1].split("```\n", 1)[1].split("```", 1)[0]
         self.assertEqual(block, proc.stdout)
 
+    def test_readme_quick_start_is_real_output(self):
+        proc = subprocess.run([sys.executable, "-m", "suite_gate", "gate", "--repo", self.repo,
+                               "--lockfile-cache", self.cache, "main", "ci"], env=self.env,
+                              stdout=subprocess.PIPE, universal_newlines=True)
+        text = (ROOT / "README.md").read_text()
+        block = text.split("## Quick start", 1)[1].split("```text\n", 1)[1].split("```", 1)[0]
+        self.assertEqual(block, proc.stdout)
+
     def test_missing_tools_make_an_error_verdict(self):
         """With no audit tool on PATH every check errors, and the gate cannot pass."""
         bare = tempfile.mkdtemp()
