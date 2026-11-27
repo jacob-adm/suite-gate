@@ -1,5 +1,7 @@
 # suite-gate
 
+<!-- mcp-name: io.github.jacob-adm/suite-gate -->
+
 suite-gate connects six command-line audit tools: git-surface, trust-path, release-drift,
 git-overlap, pr-merge-audit and glassbox. It has three parts:
 
@@ -49,6 +51,12 @@ One tool's result in the shared format (`git surface --audit-json`, first lines)
 
 ## Install
 
+From PyPI:
+
+```
+pip install suite-gate
+```
+
 From a clone:
 
 ```
@@ -57,7 +65,7 @@ cd suite-gate
 pip install .
 ```
 
-pip installs `suite-gate` as a console script. Check the install:
+Either way pip installs `suite-gate` as a console script. Check the install:
 
 ```sh
 suite-gate --version
