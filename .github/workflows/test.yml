@@ -23,15 +23,22 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m unittest discover -s tests -v
 
-  # The schema file and the standard-library validator must agree on every example.
-  schema:
+  # With the released audit tools installed: the schema agrees with the validator on every
+  # example, and the recorded MCP session replays exactly. Nothing may be skipped here.
+  audit-tools:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python -m pip install jsonschema
+      - run: python -m pip install -r requirements-test.txt
+      - name: Install glassbox 0.6.0 from its GitHub release
+        run: |
+          curl -fsSLO https://github.com/jacob-adm/glassbox/releases/download/v0.6.0/glassbox-0.6.0-x86_64-unknown-linux-gnu.tar.gz
+          echo "1c562bb9d7aa9e7ac135617e558675c58d2f0f9a8b6fc64e015d1a97b0787ef1  glassbox-0.6.0-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c
+          tar -xzf glassbox-0.6.0-x86_64-unknown-linux-gnu.tar.gz
+          echo "$PWD/glassbox-0.6.0-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
       - run: python -m unittest discover -s tests -v 2>&1 | tee out.txt
       - name: No test was skipped
         run: "! grep -q skipped out.txt"

@@ -1,0 +1,20 @@
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"replay","version":"0"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+{"jsonrpc":"2.0","id":2,"method":"tools/list"}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"git_surface","arguments":{"repo":"{ROOT}/demo","base":"main","refs":["agent/ci","agent/docs","b1"]}}}
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"git_overlap","arguments":{"repo":"{ROOT}/demo","base":"main","refs":["b1","b2","agent/docs"]}}}
+{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"git_pairmerge","arguments":{"repo":"{ROOT}/demo","pairs":[["b1","b2"],["b1","agent/docs"]]}}}
+{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"git_pairmerge","arguments":{"repo":"{ROOT}/demo","pairs":[["agent/ci","agent/docs"]],"onto":"main"}}}
+{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"trust_path","arguments":{"dir":"{ROOT}/demo"}}}
+{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"trust_path","arguments":{"dir":"{ROOT}/demo","ref":"agent/ci"}}}
+{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"release_drift_diff","arguments":{"old":"{ROOT}/demo-1.0.tar.gz","new":"{ROOT}/demo-1.1.tar.gz"}}}
+{"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"release_drift_source","arguments":{"artifact":"{ROOT}/demo-1.1.tar.gz","repo":"{ROOT}/demo","ref":"main"}}}
+{"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"pr_merge_audit_report","arguments":{"results":"{ROOT}/results.json"}}}
+{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"git_surface","arguments":{"repo":"{ROOT}/demo","base":"nope","refs":["b1"]}}}
+{"jsonrpc":"2.0","id":13,"method":"tools/call","params":{"name":"git_surface","arguments":{"repo":"{ROOT}/demo","base":"main","refs":["--output=x"]}}}
+{"jsonrpc":"2.0","id":14,"method":"tools/call","params":{"name":"trust_path","arguments":{"dir":"{ROOT}/missing"}}}
+{"jsonrpc":"2.0","id":15,"method":"tools/call","params":{"name":"trust_path","arguments":{"dir":"{ROOT}/demo","extra":1}}}
+{"jsonrpc":"2.0","id":16,"method":"tools/call","params":{"name":"no_such_tool","arguments":{}}}
+{"jsonrpc":"2.0","id":17,"method":"ping"}
+{"jsonrpc":"2.0","id":18,"method":"resources/list"}
+not json
