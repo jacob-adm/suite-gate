@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant PR as Pull request
+    participant Job as Actions job
+    participant SG as suite-gate action
+    participant Tools as Audit tools
+    PR->>Job: pull_request event
+    Job->>Job: actions/checkout, fetch-depth 0, read-only token
+    Job->>SG: install suite-gate and the audit tools
+    SG->>Tools: gate, rules ci: base origin/ + base branch, ref the pull request
+    Tools-->>SG: audit-result/1 objects
+    SG-->>PR: annotations on file and line (error for fail, warning for warn)
+    SG-->>Job: log, job summary, outputs verdict and result
+    SG-->>Job: exit 1 on fail, 2 on error, 0 on warn or pass

@@ -1,0 +1,18 @@
+flowchart TD
+    A["suite-gate gate BASE REF"] --> B["Paths REF changes since its merge base with BASE"]
+    B --> GS["git-surface<br/>always"]
+    B --> Q1{"a path under<br/>.github/workflows/?"}
+    Q1 -- yes --> TP["trust-path --ref REF"]
+    Q1 -- no --> S1["skipped"]
+    B --> Q2{"a changed lockfile?"}
+    Q2 -- "yes, for each" --> RD["release-drift lockfile<br/>merge base vs REF"]
+    Q2 -- no --> S2["skipped"]
+    B --> Q3{"other branches<br/>under the ref prefix?"}
+    Q3 -- yes --> GO["git footprint, then<br/>git overlap --with REF"]
+    Q3 -- no --> S3["skipped"]
+    GS & TP & RD & GO --> R["audit-result/1 objects,<br/>checked and kept unchanged"]
+    R --> V{"verdict, in this order"}
+    V -- "fail severity found" --> F["fail, exit 1"]
+    V -- "a check did not run" --> E["error, exit 2"]
+    V -- "warn severity found" --> W["warn, exit 0"]
+    V -- otherwise --> P["pass, exit 0"]

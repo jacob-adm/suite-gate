@@ -4,6 +4,8 @@ The suite-gate action runs the [gate](gate.md) on a pull request: it installs su
 audit tools, gives one verdict, annotates each finding on its file and line in the pull request,
 and writes a summary of every check to the job's page.
 
+<p align="center"><img src="diagrams/action.svg" alt="The GitHub Action from pull request to annotations"></p>
+
 ## Workflow
 
 Copy this file to `.github/workflows/suite-gate.yml`, with `COMMIT` the suite-gate commit to use

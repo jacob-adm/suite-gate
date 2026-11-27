@@ -23,6 +23,11 @@ high   git-surface.ci  ci modifies CI file .github/workflows/ci.yml  [.github/wo
 The first line is the verdict. Then one line per check: whether it ran, was skipped or failed
 to run, and why. Then each finding above `info`, most severe first, with its path and line.
 
+<p align="center"><img src="diagrams/gate.svg" alt="How the gate picks its checks and reaches a verdict"></p>
+
+The checks and conditions are the built-in rules; a rules file can change them. By default
+`high` fails and `medium` and `low` warn.
+
 ## Rules
 
 The built-in rules ([suite_gate/rules/default.json](../suite_gate/rules/default.json)):
