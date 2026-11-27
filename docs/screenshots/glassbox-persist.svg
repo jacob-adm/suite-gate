@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="691" height="141" viewBox="0 0 691 141" role="img" aria-label="glassbox-persist">
+<title>glassbox-persist</title>
+<rect x="0.5" y="0.5" width="690" height="140" rx="8" fill="#0d1117" stroke="#30363d"/>
+<path d="M0.5 34V8.5a8 8 0 0 1 8-8h674a8 8 0 0 1 8 8V34z" fill="#161b22"/>
+<circle cx="18" cy="17" r="6" fill="#ff5f57"/>
+<circle cx="38" cy="17" r="6" fill="#febc2e"/>
+<circle cx="58" cy="17" r="6" fill="#28c840"/>
+<text x="345.5" y="21" text-anchor="middle" fill="#8b949e" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12">glassbox-persist</text>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="18" y="62" fill="#7ee787">$ glassbox persist --home ~ --since before.json</text>
+<text x="18" y="82" fill="#e6edf3">+ added    autostart          ~/Library/LaunchAgents/com.example.updater.plist</text>
+<text x="18" y="102" fill="#e6edf3">~ changed  shell startup      ~/.zshrc</text>
+<text x="18" y="122" fill="#8b949e"># exit status 0</text>
+</g></svg>
