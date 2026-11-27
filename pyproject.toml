@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "suite-gate"
-version = "0.1.0"
+version = "0.1.1"
 description = "One result format for six audit tools, a gate that gives one verdict per branch, and an MCP server that runs them."
 readme = "README.md"
 requires-python = ">=3.9"
