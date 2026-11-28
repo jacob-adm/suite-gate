@@ -74,7 +74,7 @@ suite-gate --version
 ```
 
 ```text
-suite-gate 0.1.1
+suite-gate 0.2.0
 ```
 
 Without installing, it also runs from a clone as `python3 -m suite_gate`.
