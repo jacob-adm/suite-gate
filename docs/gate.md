@@ -79,6 +79,10 @@ as before.
   `ignored` in the gate result, and is counted on an `ignored` line of the text report. For a
   release-drift lockfile check the path matched is the lockfile's, since the finding's own path is
   inside the downloaded package. A check that could not run is never ignored.
+- `warn_rules`, optional, is a list of rule ids such as `git-surface.ci`. A finding whose rule is
+  listed and whose severity is in `verdict.fail` warns instead of failing; it still counts and is
+  annotated as a warning. Use it for a rule that is too noisy to fail on in your repository, and
+  remove the rule from the list when it is not. Findings of other rules are unchanged.
 - Any other key, or a value of the wrong shape, is refused before anything runs (exit 2).
 
 Change `name` or `version` when you change the rules: both, and the file's SHA-256, are in every
@@ -90,9 +94,9 @@ From the findings of every check, in this order:
 
 | Verdict | When | Exit |
 | --- | --- | --- |
-| `fail` | a finding has a severity in `verdict.fail` | 1 |
+| `fail` | a finding has a severity in `verdict.fail` and its rule is not in `warn_rules` | 1 |
 | `error` | otherwise, a check could not run (a tool missing, too old or timed out) or a tool reported an error | 2 |
-| `warn` | otherwise, a finding has a severity in `verdict.warn` | 0 |
+| `warn` | otherwise, a finding has a severity in `verdict.warn`, or in `verdict.fail` with its rule in `warn_rules` | 0 |
 | `pass` | otherwise | 0 |
 
 A `fail` stands even when another check errored: what was found is certain. An error without

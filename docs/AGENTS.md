@@ -13,7 +13,7 @@ particular agent harness.
 - **Cite the evidence.** For each finding, give the rule, the path, the line when there is one,
   and the commit.
 - **Report the verdict as given.** `fail` (exit 1) means a finding has a severity the rules fail
-  on. `error` (exit 2) means a check could not run: say which, never call the branch clean.
+  on, from a rule not listed in their `warn_rules`. `error` (exit 2) means a check could not run: say which, never call the branch clean.
   `warn` and `pass` exit 0.
 - **Name the rules.** A verdict comes from a rules file; give its name and version from the
   result.

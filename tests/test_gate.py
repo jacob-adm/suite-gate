@@ -149,6 +149,19 @@ class Verdicts(unittest.TestCase):
         self.assertIn("  git-surface    ran      nothing found (always runs)", text)
         self.assertIn("  ignored        1 finding(s) whose path matches the rules' ignore_paths", text)
 
+    def test_warn_rules_on_a_real_branch(self):
+        """The ci branch's only high finding is git-surface.ci; listing that rule in warn_rules
+        makes the verdict warn and exit 0, and the finding is counted, not ignored."""
+        rules = json.loads(Path(gate.DEFAULT_RULES).read_text())
+        rules["warn_rules"] = ["git-surface.ci"]
+        path = os.path.join(self.tmp, "rules-warn.json")
+        Path(path).write_text(json.dumps(rules))
+        proc, result = self.run_gate("ci", "--rules", path)
+        self.assertEqual((proc.returncode, result["verdict"]), (0, "warn"))
+        self.assertEqual(result["ignored"], [])
+        proc, result = self.run_gate("ci")
+        self.assertEqual((proc.returncode, result["verdict"]), (1, "fail"))
+
     def test_missing_tools_make_an_error_verdict(self):
         """With no audit tool on PATH every check errors, and the gate cannot pass."""
         bare = tempfile.mkdtemp()
@@ -236,6 +249,34 @@ class IgnorePaths(unittest.TestCase):
         self.assertEqual(gate.verdict(checks, self.rules), "error")
 
 
+class WarnRules(unittest.TestCase):
+    """A finding whose rule is in warn_rules warns instead of failing; other rules are unchanged."""
+
+    def setUp(self):
+        self.rules = dict(gate.load_rules()[0], warn_rules=["git-surface.ci"])
+
+    def check(self, *rules_severities):
+        return {"tool": "git-surface", "status": "ran", "result": {"exit": 1, "errors": [], "findings": [
+            {"rule": r, "severity": s, "message": "m", "evidence": {}} for r, s in rules_severities]}}
+
+    def test_listed_high_warns(self):
+        checks = [self.check(("git-surface.ci", "high"))]
+        self.assertEqual(gate.verdict(checks, self.rules), "warn")
+        self.assertEqual(gate.verdict(checks, gate.load_rules()[0]), "fail")
+
+    def test_other_high_still_fails(self):
+        checks = [self.check(("git-surface.ci", "high"), ("git-surface.build", "high"))]
+        self.assertEqual(gate.verdict(checks, self.rules), "fail")
+
+    def test_severity_in_neither_list_stays_out(self):
+        rules = dict(self.rules, verdict={"fail": ["high"], "warn": []})
+        self.assertEqual(gate.verdict([self.check(("git-surface.ci", "low"))], rules), "pass")
+
+    def test_an_error_still_beats_a_warning(self):
+        checks = [self.check(("git-surface.ci", "high")), {"tool": "x", "status": "error", "error": "e"}]
+        self.assertEqual(gate.verdict(checks, self.rules), "error")
+
+
 class Rules(unittest.TestCase):
     def write(self, rules):
         path = os.path.join(tempfile.mkdtemp(), "rules.json")
@@ -266,6 +307,8 @@ class Rules(unittest.TestCase):
             (dict(base, version="1"), "version (an integer)"),
             (dict(base, ignore_paths=["("]), "rules.ignore_paths:"),
             (dict(base, ignore_paths="dist/"), "rules.ignore_paths:"),
+            (dict(base, warn_rules="git-surface.ci"), "rules.warn_rules:"),
+            (dict(base, warn_rules=[""]), "rules.warn_rules:"),
         ]
         for rules, text in cases:
             with self.subTest(text):
