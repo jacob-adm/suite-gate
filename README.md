@@ -95,7 +95,7 @@ Without installing, it also runs from a clone as `python3 -m suite_gate`.
    `low`); else `pass`. The exit status is 1 for `fail`, 2 for `error` and 0 otherwise.
 5. **Report.** One line per check, then each finding with its path and line. With `--json`, one
    object with the rules' name, version and SHA-256, the commits, and every tool's result,
-   unchanged.
+   unchanged except that trust-path's leaves out the paths already at the merge base.
 
 ## Commands
 
