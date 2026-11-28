@@ -54,7 +54,8 @@ def load_rules(path=None):
         raise GateError("cannot read rules %s: %s" % (path, exc))
     if not isinstance(rules, dict):
         raise GateError("rules: not an object")
-    extra = sorted(set(rules) - {"format", "name", "version", "checks", "verdict", "ignore_paths"})
+    extra = sorted(set(rules) - {"format", "name", "version", "checks", "verdict", "ignore_paths",
+                                   "warn_rules"})
     if extra:
         raise GateError("rules: unknown key %s" % extra[0])
     if rules.get("format") != RULES_FORMAT:
@@ -82,6 +83,9 @@ def load_rules(path=None):
             raise GateError("%s.others: a ref prefix such as refs/heads/" % where)
     if "ignore_paths" in rules:
         _patterns(rules["ignore_paths"], "rules.ignore_paths")
+    if "warn_rules" in rules and (not isinstance(rules["warn_rules"], list) or not all(
+            isinstance(r, str) and r for r in rules["warn_rules"])):
+        raise GateError("rules.warn_rules: a list of rule ids such as git-surface.ci")
     verdict = rules.get("verdict")
     if not isinstance(verdict, dict) or set(verdict) != {"fail", "warn"}:
         raise GateError("rules.verdict: an object with fail and warn")
@@ -276,17 +280,27 @@ def counted(checks, rules):
             if not is_ignored(c, f, rules)]
 
 
+def level(finding, rules):
+    """fail or warn for a finding by its severity, or None if its severity is in neither list.
+    A finding whose rule is in the rules' warn_rules warns instead of failing."""
+    if finding["severity"] in rules["verdict"]["fail"]:
+        return "warn" if finding.get("rule") in rules.get("warn_rules", ()) else "fail"
+    if finding["severity"] in rules["verdict"]["warn"]:
+        return "warn"
+    return None
+
+
 def verdict(checks, rules):
-    """fail if a counted finding has a fail severity; else error if a check or tool errored;
-    else warn if a counted finding has a warn severity; else pass. A finding whose path matches
-    the rules' ignore_paths is not counted."""
-    severities = [f["severity"] for _, f in counted(checks, rules)]
+    """fail if a counted finding's level is fail; else error if a check or tool errored; else
+    warn if a counted finding's level is warn; else pass. A finding whose path matches the rules'
+    ignore_paths is not counted."""
+    levels = [level(f, rules) for _, f in counted(checks, rules)]
     errored = any(c["status"] == "error" or c.get("result", {}).get("exit") == 2 for c in checks)
-    if any(s in rules["verdict"]["fail"] for s in severities):
+    if "fail" in levels:
         return "fail"
     if errored:
         return "error"
-    if any(s in rules["verdict"]["warn"] for s in severities):
+    if "warn" in levels:
         return "warn"
     return "pass"
 

@@ -157,6 +157,14 @@ class Annotations(unittest.TestCase):
         self.assertEqual(action.annotations(self.result(findings), rules),
                          ["::error file=src/x.py,title=a.c (high)::n"])
 
+    def test_warn_rules_annotate_as_warnings(self):
+        rules = dict(self.rules, warn_rules=["a.b"])
+        findings = [{"rule": "a.b", "severity": "high", "message": "m", "evidence": {"path": "x.yml"}},
+                    {"rule": "a.c", "severity": "high", "message": "n", "evidence": {"path": "y.py"}}]
+        self.assertEqual(action.annotations(self.result(findings), rules),
+                         ["::warning file=x.yml,title=a.b (high)::m",
+                          "::error file=y.py,title=a.c (high)::n"])
+
     def test_summary_escapes_table_cells(self):
         result = {"verdict": "warn", "ref": {"name": "r", "commit": "a" * 40},
                   "base": {"name": "b", "commit": "b" * 40},

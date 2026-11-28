@@ -90,7 +90,8 @@ Without installing, it also runs from a clone as `python3 -m suite_gate`.
    against the other branches. A check that does not apply is listed as skipped, with the reason.
 3. **Run each tool with `--audit-json`.** Every result is checked against the format before it is
    used: a tool that is missing, too old, or prints an invalid object is an error, never a pass.
-4. **Decide.** `fail` if a finding has a severity the rules fail on (`high` by default); else
+4. **Decide.** `fail` if a finding has a severity the rules fail on (`high` by default) and its
+   rule is not one the rules downgrade to a warning; else
    `error` if a check could not run; else `warn` if a finding has a warn severity (`medium`,
    `low`); else `pass`. The exit status is 1 for `fail`, 2 for `error` and 0 otherwise.
 5. **Report.** One line per check, then each finding with its path and line. With `--json`, one

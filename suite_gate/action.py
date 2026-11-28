@@ -27,13 +27,11 @@ def _escape_property(text):
 
 
 def annotations(result, rules):
-    """One ::error or ::warning line per finding with a fail or warn severity."""
-    fail = set(rules["verdict"]["fail"])
-    warn = set(rules["verdict"]["warn"])
+    """One ::error or ::warning line per finding whose level is fail or warn."""
     lines = []
     for check in result["checks"]:
         for f in check.get("result", {}).get("findings", []):
-            level = "error" if f["severity"] in fail else "warning" if f["severity"] in warn else None
+            level = {"fail": "error", "warn": "warning"}.get(gate.level(f, rules))
             if level is None or gate.is_ignored(check, f, rules):
                 continue
             props = ["title=%s" % _escape_property("%s (%s)" % (f["rule"], f["severity"]))]
