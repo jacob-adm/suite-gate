@@ -33,6 +33,11 @@ class RecordingRunner(object):
         return [c for c in self.calls if c[0] == "trust-path"]
 
 
+def git_out(repo, *args):
+    return subprocess.run(["git"] + list(args), cwd=repo, check=True, stdout=subprocess.PIPE,
+                          universal_newlines=True).stdout.strip()
+
+
 def git(repo, *args):
     env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
     subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid"] + list(args),
@@ -75,19 +80,23 @@ class ForgeTests(unittest.TestCase):
                 self.branch_changing(name, path)
                 status, calls = self.run_gate(name)
                 self.assertEqual((status["status"], status["reason"]), ("ran", "changed: " + path))
-                self.assertEqual(len(calls), 1)
+                # REF, then the merge base, whose paths are left out
+                self.assertEqual([c[c.index("--ref") + 1] for c in calls],
+                                 [git_out(self.repo, "rev-parse", name),
+                                  git_out(self.repo, "rev-parse", "main")])
 
     def test_forge_is_passed_to_trust_path_and_github_adds_nothing(self):
         self.branch_changing("ci", ".gitea/workflows/ci.yml")
         for forge in ("gitea", "forgejo"):
             with self.subTest(forge):
                 _, calls = self.run_gate("ci", forge=forge)
-                argv = calls[0]
-                self.assertEqual(argv[argv.index("--forge") + 1], forge)
-                self.assertLess(argv.index("--forge"), argv.index("--"))
+                self.assertEqual(len(calls), 2)
+                for argv in calls:
+                    self.assertEqual(argv[argv.index("--forge") + 1], forge)
+                    self.assertLess(argv.index("--forge"), argv.index("--"))
         for kw in ({}, {"forge": "github"}):
             _, calls = self.run_gate("ci", **kw)
-            self.assertNotIn("--forge", calls[0])
+            self.assertFalse(any("--forge" in argv for argv in calls))
 
     def test_unknown_forge_is_refused(self):
         with self.assertRaises(gate.GateError):

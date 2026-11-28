@@ -2,8 +2,9 @@
 
 `suite-gate gate BASE REF` runs the audit tools a rules file names on the changes REF makes
 since its merge base with BASE, and gives one verdict: `pass`, `warn`, `fail` or `error`. The
-verdict follows fixed rules; no model takes part. Every tool's audit result is kept unchanged,
-so each finding keeps its rule, severity, sentence and evidence.
+verdict follows fixed rules; no model takes part. Every finding is kept as its tool wrote it,
+with its rule, severity, sentence and evidence; the one change is that trust-path's result leaves
+out the paths already at the merge base (see [Rules](#rules)).
 
 ```
 suite-gate gate [--repo DIR] [--rules FILE] [--json] [--lockfile-cache DIR] [--forge FORGE] [--timeout SECONDS] BASE REF
@@ -35,7 +36,7 @@ The built-in rules ([suite_gate/rules/default.json](../suite_gate/rules/default.
 | Check | When | Runs |
 | --- | --- | --- |
 | git-surface | always | `git surface --audit-json BASE` on REF |
-| trust-path | a changed path matches `^\.github/workflows/`, `^\.gitea/workflows/` or `^\.forgejo/workflows/` | `trust-path --audit-json --ref REF`, with `--forge FORGE` when it is given |
+| trust-path | a changed path matches `^\.github/workflows/`, `^\.gitea/workflows/` or `^\.forgejo/workflows/` | `trust-path --audit-json --ref REF` and the same at the merge base, with `--forge FORGE` when it is given. Only the paths REF adds are kept: a finding whose record is also at the merge base is left out, and the result's `exit` is 0 when none is left. If the merge base cannot be read, every path at REF is kept and the reason says so |
 | release-drift | for each changed lockfile (`package-lock.json`, `npm-shrinkwrap.json`, `uv.lock`, `poetry.lock`, `requirements*.txt`) | `release-drift lockfile --audit-json` on its version at the merge base and at REF; a lockfile added or deleted by REF is skipped, since there is nothing to compare |
 | git-overlap | always, if another branch exists under `refs/heads/` | `git footprint BASE` of REF and every other branch there, then `git overlap --audit-json --with REF` |
 
@@ -112,7 +113,7 @@ With `--json` the gate prints one object:
 | `merge_base` | the commit the changes are taken from |
 | `changed` | the changed paths, sorted |
 | `ignored` | each finding above `info` that the rules' `ignore_paths` left out of the verdict: `tool`, `rule`, `severity`, `path` (empty when none) |
-| `checks` | one object per check run or skipped, in order: `tool`, `status` (`ran`, `skipped` or `error`), `reason`, `path` for a lockfile, `result` (the tool's audit result object, unchanged) or `error` (why it could not run) |
+| `checks` | one object per check run or skipped, in order: `tool`, `status` (`ran`, `skipped` or `error`), `reason`, `path` for a lockfile, `result` (the tool's audit result object; for trust-path, without the paths already at the merge base) or `error` (why it could not run) |
 | `verdict`, `exit` | as above |
 
 ## Network

@@ -31,7 +31,8 @@ suite-gate gate main my-branch
 
 The first line is the verdict; then one line per check (ran, skipped with the reason, or error);
 then each finding with its path and line. `--json` prints the whole result: the rules' name,
-version and SHA-256, the commits, and every tool's result object unchanged. A change that
+version and SHA-256, the commits, and every tool's result object (trust-path's without the
+paths already at the merge base). A change that
 touches CI, an install script or an agent instruction file is expected to fail: say what was
 found and leave the decision to the reviewer.
 
