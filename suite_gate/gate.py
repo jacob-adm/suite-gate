@@ -3,7 +3,8 @@
 
 The rules file says which audit tool runs when, and which severities fail or warn. The verdict
 follows a fixed precedence (fail, then error, then warn, then pass); no model takes part. Each
-tool's audit result is kept unchanged in the gate result, so every finding keeps its evidence.
+tool's audit result is kept in the gate result, so every finding keeps its evidence; trust-path's
+leaves out the paths already at the merge base.
 """
 import hashlib
 import json
@@ -161,9 +162,35 @@ def _trust(runner, ctx, check):
             check["when_changed"]))]
     reason = "changed: %s" % ", ".join(hits) if patterns else "always runs"
     forge = ["--forge", ctx["forge"]] if ctx.get("forge", "github") != "github" else []
-    return [_run(runner, "trust-path", reason, lambda: runner.audit(
-        "trust-path", [runner.exe("trust-path", "trust-path"), "--audit-json", "--ref",
-                       ctx["ref_commit"]] + forge + ["--", ctx["repo"]]))]
+
+    def at(commit):
+        return runner.audit("trust-path", [runner.exe("trust-path", "trust-path"), "--audit-json",
+                                           "--ref", commit] + forge + ["--", ctx["repo"]])
+    try:
+        result = at(ctx["ref_commit"])
+    except ToolError as exc:
+        return [_entry("trust-path", reason, error=str(exc))]
+    try:
+        known = set(_key(f) for f in at(ctx["merge_base"])["findings"])
+    except ToolError as exc:
+        return [_entry("trust-path", reason + "; merge base not read (%s), so every path at REF "
+                       "is reported" % exc, result=result)]
+    return [_entry("trust-path", reason, result=new_paths(result, known))]
+
+
+def _key(finding):
+    """A trust-path finding's record, which names no commit, as a comparable value."""
+    return json.dumps(finding.get("record"), sort_keys=True)
+
+
+def new_paths(result, known):
+    """RESULT without the findings whose record is in KNOWN (the merge base's), with its exit
+    status following what is left: 0 when no finding is left, unless the tool errored."""
+    findings = [f for f in result["findings"] if _key(f) not in known]
+    if len(findings) == len(result["findings"]):
+        return result
+    exit_ = result["exit"] if result["exit"] == 2 else (1 if findings else 0)
+    return dict(result, findings=findings, exit=exit_)
 
 
 def _drift(runner, ctx, check):
