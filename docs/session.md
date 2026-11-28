@@ -90,5 +90,7 @@ documentation. Locations outside the home directory (on macOS, login items regis
 whole machine) can change for reasons that have nothing to do with the session; the report
 names each one, so a reader can tell them apart.
 
-glassbox's other session check, `watch`, which follows an agent's transcript as it runs, has
-no `--audit-json` yet and is not part of this command.
+glassbox's other session check, `watch`, follows an agent's transcript as it runs. From glassbox
+0.7.0, `glassbox watch TRANSCRIPT --once --audit-json` scans a finished transcript for loops,
+output spikes and runs of failed tool calls and prints the same result format; this command does
+not run it.
