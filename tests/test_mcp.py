@@ -17,7 +17,7 @@ from tests import session_fixture
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures" / "mcp"
 # The released versions the recording was made with (requirements-test.txt).
-PINNED = {"git-surface": "0.5.0", "trust-path": "0.9.0", "release-drift": "0.7.0",
+PINNED = {"git-surface": "0.5.0", "trust-path": "0.10.0", "release-drift": "0.7.0",
           "git-overlap": "0.7.0", "pr-merge-audit": "2.3.0"}
 
 
