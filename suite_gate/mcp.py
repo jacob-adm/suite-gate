@@ -181,11 +181,21 @@ def _git_pairmerge(r, args):
     return r.audit("git-overlap", argv, data, cwd=repo)
 
 
+def _forge(args):
+    """The optional forge argument: github (the default), gitea or forgejo."""
+    forge = args.get("forge", "github")
+    if forge not in ("github", "gitea", "forgejo"):
+        raise ToolError("argument forge: one of github, gitea, forgejo")
+    return forge
+
+
 def _trust_path(r, args):
-    directory, ref = _dir(args, "dir"), _text(args, "ref", required=False)
+    directory, ref, forge = _dir(args, "dir"), _text(args, "ref", required=False), _forge(args)
     argv = [r.exe("trust-path", "trust-path"), "--audit-json"]
     if ref:
         argv += ["--ref", ref]
+    if forge != "github":
+        argv += ["--forge", forge]
     return r.audit("trust-path", argv + ["--", directory])
 
 
@@ -233,9 +243,9 @@ def _glassbox_persist(r, args):
 
 def _gate(r, args):
     from . import gate
-    repo, base, ref = _dir(args, "repo"), _text(args, "base"), _text(args, "ref")
+    repo, base, ref, forge = _dir(args, "repo"), _text(args, "base"), _text(args, "ref"), _forge(args)
     try:
-        return gate.gate(repo, base, ref, runner=r)
+        return gate.gate(repo, base, ref, runner=r, forge=forge)
     except gate.GateError as exc:
         raise ToolError(str(exc))
 
@@ -249,6 +259,10 @@ def _schema(props, required):
             "additionalProperties": False}
 
 
+FORGE = {"type": "string", "enum": ["github", "gitea", "forgejo"],
+         "description": "Whose workflow rules trust-path applies (default github; gitea and "
+                        "forgejo need trust-path 0.9.0 or later)"}
+
 REFS = {"type": "array", "items": {"type": "string"}, "minItems": 1,
         "description": "Branch, tag or commit names to check"}
 
@@ -260,7 +274,8 @@ TOOLS = {
         "for each changed lockfile (queries registries), git-overlap against the other local "
         "branches. Returns every tool's audit result with its evidence.",
         _schema({"repo": _s("Repository directory"), "base": _s("Base branch, e.g. main"),
-                 "ref": _s("Branch to judge")}, ["repo", "base", "ref"]), True, _gate),
+                 "ref": _s("Branch to judge"), "forge": FORGE}, ["repo", "base", "ref"]),
+        True, _gate),
     "git_surface": (
         "git-surface: what each ref changes, since its merge base with base, that runs or is "
         "trusted (CI, hooks, agent files, install scripts, dependencies, hidden text).",
@@ -281,10 +296,11 @@ TOOLS = {
                  "onto": _s("Base both refs land on")}, ["repo", "pairs"]), False, _git_pairmerge),
     "trust_path": (
         "trust-path: paths by which untrusted input reaches a secret, write permission, OIDC "
-        "token, environment or AI agent action in GitHub Actions workflows.",
+        "token, environment or AI agent action in GitHub Actions workflows (Gitea and Forgejo "
+        "with forge).",
         _schema({"dir": _s("Repository directory"),
-                 "ref": _s("Read the workflows from git at this ref instead of the files")},
-                ["dir"]), False, _trust_path),
+                 "ref": _s("Read the workflows from git at this ref instead of the files"),
+                 "forge": FORGE}, ["dir"]), False, _trust_path),
     "release_drift_diff": (
         "release-drift: what a new release artifact adds over an old one (install scripts, "
         "start-up hooks, native code, new dependencies, URL hosts, encoded strings).",

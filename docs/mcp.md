@@ -39,11 +39,11 @@ ready.
 | Tool | Runs | Arguments |
 | --- | --- | --- |
 | `list_audit_tools` | `--version` of each tool | none |
-| `gate` | `suite-gate gate BASE REF` with the built-in rules; see [Gate](gate.md) | `repo`, `base`, `ref` |
+| `gate` | `suite-gate gate BASE REF` with the built-in rules; see [Gate](gate.md) | `repo`, `base`, `ref`, optional `forge` |
 | `git_surface` | `git surface --audit-json BASE`, refs on standard input | `repo`, `base`, `refs` |
 | `git_overlap` | `git footprint BASE`, then `git overlap --audit-json` | `repo`, `base`, `refs`, optional `with` |
 | `git_pairmerge` | `git pairmerge --audit-json`, pairs on standard input | `repo`, `pairs` (`[[refA, refB], ...]`), optional `onto` |
-| `trust_path` | `trust-path --audit-json DIR` | `dir`, optional `ref` |
+| `trust_path` | `trust-path --audit-json DIR` | `dir`, optional `ref`, optional `forge` (`github`, `gitea` or `forgejo`) |
 | `release_drift_diff` | `release-drift diff --audit-json OLD NEW` | `old`, `new` (artifact files) |
 | `release_drift_source` | `release-drift source --audit-json ARTIFACT --repo DIR --ref REF` | `artifact`, `repo`, `ref` |
 | `release_drift_lockfile` | `release-drift lockfile --audit-json OLD NEW` (downloads) | `old`, `new` (lockfiles) |

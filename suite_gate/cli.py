@@ -27,6 +27,9 @@ def main(argv=None):
                         "(branches under origin/, for a CI checkout)")
     g.add_argument("--exclude", action="append", default=[], metavar="BRANCH",
                    help="leave BRANCH out of the overlap check (repeatable)")
+    g.add_argument("--forge", choices=gate.FORGES, default="github",
+                   help="whose workflow rules trust-path applies: github (default), gitea or "
+                        "forgejo (needs trust-path 0.9.0 or later)")
     g.add_argument("--json", action="store_true", help="print the gate result object")
     g.add_argument("--lockfile-cache", metavar="DIR",
                    help="release-drift: read packages from DIR and query no registry")
@@ -62,7 +65,8 @@ def main(argv=None):
     if args.command == "gate":
         try:
             result = gate.gate(args.repo, args.base, args.ref, args.rules,
-                               mcp.Runner(args.timeout), args.lockfile_cache, args.exclude)
+                               mcp.Runner(args.timeout), args.lockfile_cache, args.exclude,
+                               args.forge)
         except (gate.GateError, mcp.ToolError) as exc:
             sys.stderr.write("suite-gate: %s\n" % exc)
             return 2

@@ -160,9 +160,10 @@ def _trust(runner, ctx, check):
         return [_entry("trust-path", "no changed path matches %s" % ", ".join(
             check["when_changed"]))]
     reason = "changed: %s" % ", ".join(hits) if patterns else "always runs"
+    forge = ["--forge", ctx["forge"]] if ctx.get("forge", "github") != "github" else []
     return [_run(runner, "trust-path", reason, lambda: runner.audit(
         "trust-path", [runner.exe("trust-path", "trust-path"), "--audit-json", "--ref",
-                       ctx["ref_commit"], "--", ctx["repo"]]))]
+                       ctx["ref_commit"]] + forge + ["--", ctx["repo"]]))]
 
 
 def _drift(runner, ctx, check):
@@ -263,8 +264,15 @@ def verdict(checks, rules):
     return "pass"
 
 
-def gate(repo, base, ref, rules_path=None, runner=None, lockfile_cache=None, exclude=()):
+# Whose workflow rules trust-path applies; github needs no option, so older trust-path still runs.
+FORGES = ("github", "gitea", "forgejo")
+
+
+def gate(repo, base, ref, rules_path=None, runner=None, lockfile_cache=None, exclude=(),
+         forge="github"):
     """Run the gate; return the gate result object. Raises GateError if it cannot start."""
+    if forge not in FORGES:
+        raise GateError("unknown forge %s (one of %s)" % (forge, ", ".join(FORGES)))
     runner = runner or Runner()
     rules, sha256, path = load_rules(rules_path)
     _text({"base": base}, "base")
@@ -275,7 +283,7 @@ def gate(repo, base, ref, rules_path=None, runner=None, lockfile_cache=None, exc
     merge_base, paths = changed(repo, base_commit, ref_commit)
     ctx = {"repo": repo, "base": base, "ref": ref, "ref_commit": ref_commit,
            "merge_base": merge_base, "paths": paths, "lockfile_cache": lockfile_cache,
-           "exclude": exclude}
+           "exclude": exclude, "forge": forge}
     checks = []
     for check in rules["checks"]:
         checks.extend(HANDLERS[check["tool"]](runner, ctx, check))
