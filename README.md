@@ -100,10 +100,10 @@ Without installing, it also runs from a clone as `python3 -m suite_gate`.
 ## Commands
 
 ```
-suite-gate gate [--repo DIR] [--rules FILE] [--json] BASE REF   one verdict for REF against BASE
-suite-gate mcp [--timeout SECONDS]                              serve the audit tools to an MCP client
-suite-gate session save|check|run [--repo DIR]... [-- COMMAND]  what an agent session left that runs later
-suite-gate validate [FILE]                                      check an audit result object
+suite-gate gate [--repo DIR] [--rules FILE] [--forge FORGE] [--json] BASE REF   one verdict for REF against BASE
+suite-gate mcp [--timeout SECONDS]                                              serve the audit tools to an MCP client
+suite-gate session save|check|run [--repo DIR]... [-- COMMAND]                  what an agent session left that runs later
+suite-gate validate [FILE]                                                      check an audit result object
 ```
 
 See [Gate](https://github.com/jacob-adm/suite-gate/blob/main/docs/gate.md) for every option, the

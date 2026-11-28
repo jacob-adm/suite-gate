@@ -6,7 +6,7 @@ verdict follows fixed rules; no model takes part. Every tool's audit result is k
 so each finding keeps its rule, severity, sentence and evidence.
 
 ```
-suite-gate gate [--repo DIR] [--rules FILE] [--json] [--lockfile-cache DIR] [--timeout SECONDS] BASE REF
+suite-gate gate [--repo DIR] [--rules FILE] [--json] [--lockfile-cache DIR] [--forge FORGE] [--timeout SECONDS] BASE REF
 ```
 
 For the `ci` branch of the test fixture, whose only change is to a CI workflow:
@@ -35,11 +35,18 @@ The built-in rules ([suite_gate/rules/default.json](../suite_gate/rules/default.
 | Check | When | Runs |
 | --- | --- | --- |
 | git-surface | always | `git surface --audit-json BASE` on REF |
-| trust-path | a changed path matches `^\.github/workflows/` | `trust-path --audit-json --ref REF` |
+| trust-path | a changed path matches `^\.github/workflows/`, `^\.gitea/workflows/` or `^\.forgejo/workflows/` | `trust-path --audit-json --ref REF`, with `--forge FORGE` when it is given |
 | release-drift | for each changed lockfile (`package-lock.json`, `npm-shrinkwrap.json`, `uv.lock`, `poetry.lock`, `requirements*.txt`) | `release-drift lockfile --audit-json` on its version at the merge base and at REF; a lockfile added or deleted by REF is skipped, since there is nothing to compare |
 | git-overlap | always, if another branch exists under `refs/heads/` | `git footprint BASE` of REF and every other branch there, then `git overlap --audit-json --with REF` |
 
 and the verdict: `high` fails; `medium` and `low` warn.
+
+For a repository whose CI runs on Gitea or Forgejo, `--forge gitea` or `--forge forgejo` makes
+trust-path apply that forge's workflow rules: which workflow directory it runs, its context
+names and events (see trust-path's
+[Gitea and Forgejo](https://github.com/jacob-adm/trust-path/blob/main/docs/commands.md#gitea-and-forgejo)).
+It needs trust-path 0.9.0 or later. Without `--forge`, or with `--forge github`, trust-path is run
+as before.
 
 `--rules FILE` replaces the built-in rules with a file of the same shape:
 
@@ -50,7 +57,8 @@ and the verdict: `high` fails; `medium` and `low` warn.
   "version": 1,
   "checks": [
     {"tool": "git-surface"},
-    {"tool": "trust-path", "when_changed": ["^\\.github/workflows/"]},
+    {"tool": "trust-path",
+     "when_changed": ["^\\.github/workflows/", "^\\.gitea/workflows/", "^\\.forgejo/workflows/"]},
     {"tool": "release-drift", "for_each_changed": ["(^|/)(package-lock\\.json|...)$"]},
     {"tool": "git-overlap", "others": "refs/heads/"}
   ],
