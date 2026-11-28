@@ -43,7 +43,7 @@ One tool's result in the shared format (`git surface --audit-json`, first lines)
   | Tool | Minimum | Install |
   | --- | --- | --- |
   | git-surface | 0.4.0 | `pip install git-surface` |
-  | trust-path | 0.8.1 | `pip install trust-path` |
+  | trust-path | 0.8.1 (0.9.0 for `--forge`) | `pip install trust-path` |
   | release-drift | 0.7.0 | `pip install release-drift` |
   | git-overlap | 0.7.0 | `pip install git-overlap` |
   | pr-merge-audit | 2.3.0 | `pip install pr-merge-audit` |
@@ -74,7 +74,7 @@ suite-gate --version
 ```
 
 ```text
-suite-gate 0.2.0
+suite-gate 0.3.0
 ```
 
 Without installing, it also runs from a clone as `python3 -m suite_gate`.
